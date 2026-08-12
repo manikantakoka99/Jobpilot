@@ -16,7 +16,8 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScoreGauge, scoreTone } from "@/components/ats/score-gauge";
-import { ExpandableList } from "@/components/ats/expandable-list";
+import { KeywordBadgeList } from "@/components/ats/keyword-badge-list";
+import { SkillBadgeList } from "@/components/ats/skill-badge-list";
 import { AnalysisDeleteButton } from "@/components/ats/analysis-delete-button";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -141,14 +142,7 @@ export function ResultView({ analysis }: { analysis: AnalysisView }) {
               {analysis.matchedKeywords.length === 0 ? (
                 <p className="text-muted-foreground text-xs">No overlapping keywords found.</p>
               ) : (
-                <ExpandableList
-                  items={analysis.matchedKeywords}
-                  renderItem={(keyword) => (
-                    <Badge key={keyword} variant="secondary">
-                      {keyword}
-                    </Badge>
-                  )}
-                />
+                <KeywordBadgeList items={analysis.matchedKeywords} tone="matched" />
               )}
             </div>
             <div>
@@ -158,14 +152,7 @@ export function ResultView({ analysis }: { analysis: AnalysisView }) {
               {analysis.missingKeywords.length === 0 ? (
                 <p className="text-muted-foreground text-xs">No gaps found — great coverage.</p>
               ) : (
-                <ExpandableList
-                  items={analysis.missingKeywords}
-                  renderItem={(keyword) => (
-                    <Badge key={keyword} variant="outline" className="border-destructive/30 text-destructive">
-                      {keyword}
-                    </Badge>
-                  )}
-                />
+                <KeywordBadgeList items={analysis.missingKeywords} tone="missing" />
               )}
             </div>
           </div>
@@ -180,14 +167,7 @@ export function ResultView({ analysis }: { analysis: AnalysisView }) {
               {analysis.skillsFound.length === 0 ? (
                 <p className="text-muted-foreground text-xs">No recognized skills found in your resume.</p>
               ) : (
-                <ExpandableList
-                  items={analysis.skillsFound}
-                  renderItem={(skill) => (
-                    <Badge key={skill.name} variant="secondary">
-                      {skill.name}
-                    </Badge>
-                  )}
-                />
+                <SkillBadgeList items={analysis.skillsFound} tone="found" />
               )}
             </div>
             <div>
@@ -197,14 +177,7 @@ export function ResultView({ analysis }: { analysis: AnalysisView }) {
               {analysis.skillsMissing.length === 0 ? (
                 <p className="text-muted-foreground text-xs">No required skills appear to be missing.</p>
               ) : (
-                <ExpandableList
-                  items={analysis.skillsMissing}
-                  renderItem={(skill) => (
-                    <Badge key={skill.name} variant="outline" className="border-destructive/30 text-destructive">
-                      {skill.name}
-                    </Badge>
-                  )}
-                />
+                <SkillBadgeList items={analysis.skillsMissing} tone="missing" />
               )}
             </div>
           </div>
