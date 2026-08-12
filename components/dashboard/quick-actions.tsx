@@ -12,8 +12,8 @@ const ACTIONS = [
   },
   {
     icon: FileCheck2,
-    title: "Preview ATS Analyzer",
-    description: "See what's coming in a future phase.",
+    title: "Try ATS Analyzer",
+    description: "Score your resume against a job description in seconds.",
     href: "/dashboard/ats-analyzer",
   },
   {

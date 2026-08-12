@@ -31,7 +31,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: "Main",
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, status: "active" },
-      { title: "ATS Analyzer", href: "/dashboard/ats-analyzer", icon: FileCheck2, status: "soon" },
+      { title: "ATS Analyzer", href: "/dashboard/ats-analyzer", icon: FileCheck2, status: "active" },
       { title: "Resume Optimizer", href: "/dashboard/resume-optimizer", icon: FileEdit, status: "soon" },
       { title: "Cover Letter", href: "/dashboard/cover-letter", icon: Mail, status: "soon" },
       { title: "Applications", href: "/dashboard/applications", icon: ClipboardList, status: "soon" },
@@ -55,6 +55,9 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-export const PAGE_TITLES: Record<string, string> = Object.fromEntries(
-  NAV_SECTIONS.flatMap((section) => section.items.map((item) => [item.href, item.title])),
-);
+export const PAGE_TITLES: Record<string, string> = {
+  ...Object.fromEntries(NAV_SECTIONS.flatMap((section) => section.items.map((item) => [item.href, item.title]))),
+  // Nested ATS Analyzer routes aren't in NAV_SECTIONS (only the top-level tab is a sidebar item).
+  "/dashboard/ats-analyzer/history": "ATS Analyzer",
+  "/dashboard/ats-analyzer/resumes": "ATS Analyzer",
+};
