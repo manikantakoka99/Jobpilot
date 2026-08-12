@@ -1,16 +1,18 @@
-import type { Metadata } from "next";
-import { Mail } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { ComingSoon } from "@/components/dashboard/coming-soon";
+import { createClient } from "@/lib/supabase/server";
+import { listResumes } from "@/services/resume-service";
+import { listResumeVersions } from "@/services/resume-optimizer-service";
+import { CoverLetterForm } from "@/components/cover-letter/cover-letter-form";
 
-export const metadata: Metadata = { title: "Cover Letter" };
+export default async function CoverLetterPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-export default function CoverLetterPage() {
-  return (
-    <ComingSoon
-      icon={Mail}
-      title="Cover Letter"
-      description="Generate personalized cover letters that match your voice and the role you're applying for."
-    />
-  );
+  const [resumes, versions] = await Promise.all([listResumes(supabase, user.id), listResumeVersions(supabase, user.id)]);
+
+  return <CoverLetterForm resumes={resumes} versions={versions} />;
 }

@@ -1,16 +1,18 @@
-import type { Metadata } from "next";
-import { FileEdit } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { ComingSoon } from "@/components/dashboard/coming-soon";
+import { createClient } from "@/lib/supabase/server";
+import { listResumes } from "@/services/resume-service";
+import { listResumeVersions } from "@/services/resume-optimizer-service";
+import { OptimizerForm } from "@/components/optimizer/optimizer-form";
 
-export const metadata: Metadata = { title: "Resume Optimizer" };
+export default async function ResumeOptimizerPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-export default function ResumeOptimizerPage() {
-  return (
-    <ComingSoon
-      icon={FileEdit}
-      title="Resume Optimizer"
-      description="Get targeted, AI-powered suggestions to tailor your resume to any job description."
-    />
-  );
+  const [resumes, versions] = await Promise.all([listResumes(supabase, user.id), listResumeVersions(supabase, user.id)]);
+
+  return <OptimizerForm resumes={resumes} versions={versions} />;
 }

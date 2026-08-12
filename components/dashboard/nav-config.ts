@@ -32,8 +32,8 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, status: "active" },
       { title: "ATS Analyzer", href: "/dashboard/ats-analyzer", icon: FileCheck2, status: "active" },
-      { title: "Resume Optimizer", href: "/dashboard/resume-optimizer", icon: FileEdit, status: "soon" },
-      { title: "Cover Letter", href: "/dashboard/cover-letter", icon: Mail, status: "soon" },
+      { title: "Resume Optimizer", href: "/dashboard/resume-optimizer", icon: FileEdit, status: "active" },
+      { title: "Cover Letter", href: "/dashboard/cover-letter", icon: Mail, status: "active" },
       { title: "Applications", href: "/dashboard/applications", icon: ClipboardList, status: "soon" },
       { title: "Interview Prep", href: "/dashboard/interview-prep", icon: MessagesSquare, status: "soon" },
       { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3, status: "soon" },
@@ -60,4 +60,7 @@ export const PAGE_TITLES: Record<string, string> = {
   // Nested ATS Analyzer routes aren't in NAV_SECTIONS (only the top-level tab is a sidebar item).
   "/dashboard/ats-analyzer/history": "ATS Analyzer",
   "/dashboard/ats-analyzer/resumes": "ATS Analyzer",
+  // Nested Resume Optimizer / Cover Letter routes — same pattern.
+  "/dashboard/resume-optimizer/versions": "Resume Optimizer",
+  "/dashboard/cover-letter/history": "Cover Letter",
 };
