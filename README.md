@@ -28,8 +28,8 @@ Built to run entirely on **free tiers**: Next.js + Vercel + Supabase.
 - **UI:** Tailwind CSS, shadcn/ui, Framer Motion, Lucide icons
 - **Backend:** Supabase (PostgreSQL, Auth, Storage)
 - **ATS scoring:** a fully deterministic, in-house engine (`lib/ats/`) — no AI involved
-- **AI (optional, Phase 3):** Anthropic Claude via `@anthropic-ai/sdk`, isolated behind a
-  vendor-neutral provider abstraction (`lib/ai/`)
+- **AI (optional, Phase 3):** Groq (free-tier Llama 3.3 70B) via `groq-sdk`, isolated
+  behind a vendor-neutral provider abstraction (`lib/ai/`)
 - **Deployment:** Vercel (free tier)
 
 ## 1. Requirements
@@ -59,9 +59,9 @@ cp .env.example .env.local
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Your Supabase anon/public API key |
-| `AI_PROVIDER` | No (Phase 3 only) | AI provider to use. Currently only `anthropic` is implemented |
-| `AI_API_KEY` | No (Phase 3 only) | Your Anthropic API key — read server-side only, never sent to the browser |
-| `AI_MODEL` | No | Overrides the default model (`claude-sonnet-5`) |
+| `AI_PROVIDER` | No (Phase 3 only) | AI provider to use. Currently only `groq` is implemented |
+| `AI_API_KEY` | No (Phase 3 only) | Your Groq API key — read server-side only, never sent to the browser |
+| `AI_MODEL` | No | Overrides the default model (`llama-3.3-70b-versatile`) |
 
 The two `NEXT_PUBLIC_SUPABASE_*` values are found in your Supabase project at **Project
 Settings → API**. The `AI_*` variables are optional — see [§8 AI provider
@@ -154,14 +154,15 @@ The Resume Optimizer and Cover Letter Generator are the only parts of the app th
 an external AI provider. Everything else — auth, the dashboard, the ATS Analyzer's
 scoring — is deterministic and works with **zero** AI configuration.
 
-1. Create a free/pay-as-you-go account at [console.anthropic.com](https://console.anthropic.com/)
-   and generate an API key.
+1. Create a free account at [console.groq.com](https://console.groq.com/) and generate an
+   API key at [console.groq.com/keys](https://console.groq.com/keys). Groq's free tier is
+   enough to run Phase 3.
 2. Set in `.env.local` (and in Vercel's project environment variables for production):
    ```
-   AI_PROVIDER=anthropic
-   AI_API_KEY=sk-ant-...
+   AI_PROVIDER=groq
+   AI_API_KEY=gsk_...
    ```
-3. Optionally set `AI_MODEL` to override the default (`claude-sonnet-5`).
+3. Optionally set `AI_MODEL` to override the default (`llama-3.3-70b-versatile`).
 4. Restart `npm run dev` (or redeploy). The "AI provider not configured" banner on
    `/dashboard/resume-optimizer` and `/dashboard/cover-letter` should disappear.
 
@@ -219,12 +220,15 @@ All AI calls are isolated behind a single vendor-neutral interface in `lib/ai/`:
 - **`lib/ai/types.ts`** — the `AIProvider` interface (`optimizeResume()` /
   `generateCoverLetter()`) and its input/output types. Nothing outside `lib/ai/` talks to
   a provider SDK directly.
-- **`lib/ai/provider.ts`** — the only file that imports `@anthropic-ai/sdk`. Exposes
+- **`lib/ai/provider.ts`** — the only file that imports `groq-sdk`. Exposes
   `getAIProvider()` (returns `null` if unconfigured), `requireAIProvider()` (throws a
   typed error if unconfigured), and `isAIProviderConfigured()` (non-throwing check used
-  to render the "not configured" banner). AI output is parsed with the SDK's
-  `messages.parse()` + `zodOutputFormat()`, so responses are Zod-validated before they
-  ever reach application code (schemas in `lib/validations/ai-output.ts`).
+  to render the "not configured" banner). Requests use Groq's `chat.completions.create()`
+  with a `response_format: { type: "json_schema", ... }` hint built from the same Zod
+  schemas via `z.toJSONSchema()`; the JSON response is then parsed and re-validated with
+  those Zod schemas before it ever reaches application code (schemas in
+  `lib/validations/ai-output.ts`) — Groq's schema hint is best-effort, so this Zod
+  validation is the actual safety guarantee, not just a formality.
 - **`lib/ai/errors.ts`** — a typed `AIProviderError` hierarchy (not configured, bad
   key, rate limited, timeout, provider outage, content too large, malformed output) each
   with a safe, user-facing message. Raw provider errors/stack traces are never shown to
@@ -272,8 +276,8 @@ and can be reopened, edited, regenerated, copied, downloaded, or deleted.
 - Downloads are plain `.txt` only — there is no PDF/DOCX generation. This is intentional:
   the spec explicitly forbids paid document-generation services and false fidelity
   claims, so we don't pretend to produce a formatted document we can't.
-- Only one AI provider (Anthropic) is implemented. `AI_PROVIDER=anthropic` is the only
-  supported value today.
+- Only one AI provider (Groq) is implemented. `AI_PROVIDER=groq` is the only supported
+  value today.
 - AI optimization output is only as good as the source resume text — resumes that failed
   text extraction (scanned images, password-protected PDFs) can't be optimized until
   re-uploaded as a text-based file.

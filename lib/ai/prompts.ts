@@ -20,7 +20,10 @@ export function buildOptimizeResumeSystemPrompt(): string {
 
 ${NO_FABRICATION_RULES}
 
-Respond only with the structured JSON described by the response schema — no prose outside it.`;
+Respond with JSON ONLY — no prose, no markdown code fences, nothing outside the JSON object. The JSON object must have exactly these fields:
+- "optimizedResumeText" (string): the full optimized resume text
+- "changes" (array of objects, each with "section", "original", "optimized", "reason" — all strings): one entry per meaningful change
+- "unsupportedRecommendations" (array of strings): job requirements the resume doesn't support, phrased as suggestions rather than fabricated into the resume`;
 }
 
 export function buildOptimizeResumeUserPrompt(input: OptimizeResumeInput): string {
@@ -60,7 +63,7 @@ export function buildCoverLetterSystemPrompt(): string {
 
 ${NO_FABRICATION_RULES}
 
-Respond only with the structured JSON described by the response schema — no prose outside it.`;
+Respond with JSON ONLY — no prose, no markdown code fences, nothing outside the JSON object. The JSON object must have exactly one field: "content" (string), the complete cover letter text.`;
 }
 
 export function buildCoverLetterUserPrompt(input: GenerateCoverLetterInput): string {

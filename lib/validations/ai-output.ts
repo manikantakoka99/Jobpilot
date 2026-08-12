@@ -3,9 +3,9 @@ import { z } from "zod";
 /**
  * Zod schemas describing the exact shape an AI provider must return. These
  * double as the JSON schema handed to the provider (see lib/ai/provider.ts,
- * which uses `zodOutputFormat()`) and as the runtime validator applied to
- * whatever the provider actually sends back — the app never trusts AI
- * output without validating it against these first.
+ * which converts them via `z.toJSONSchema()`) and as the runtime validator
+ * applied to whatever the provider actually sends back — the app never
+ * trusts AI output without validating it against these first.
  */
 
 export const resumeChangeSchema = z.object({

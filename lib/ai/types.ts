@@ -44,8 +44,8 @@ export interface GenerateCoverLetterInput {
 
 /**
  * Vendor-neutral AI provider contract. Every concrete provider (currently
- * only Anthropic — see provider.ts) implements this and nothing else in the
- * app talks to a provider SDK directly.
+ * only Groq — see provider.ts) implements this and nothing else in the app
+ * talks to a provider SDK directly.
  */
 export interface AIProvider {
   readonly name: string;
