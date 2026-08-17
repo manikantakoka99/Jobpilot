@@ -48,8 +48,11 @@ export class AIProviderUnavailableError extends AIProviderError {
 }
 
 export class AIContentTooLargeError extends AIProviderError {
-  constructor() {
-    super("Your resume or job description is too long for the AI provider to process. Please shorten it and try again.");
+  constructor(detail?: string) {
+    super(
+      detail ??
+        "Your resume and job description exceed the AI input limit. Try removing unrelated boilerplate from the job description.",
+    );
   }
 }
 
