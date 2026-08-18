@@ -47,7 +47,7 @@ Built to run entirely on **free tiers**: Next.js + Vercel + Supabase.
 - **UI:** Tailwind CSS, shadcn/ui, Framer Motion, Lucide icons
 - **Backend:** Supabase (PostgreSQL, Auth, Storage)
 - **ATS scoring:** a fully deterministic, in-house engine (`lib/ats/`) — no AI involved
-- **AI (optional, Phase 3 & 5):** Groq (free-tier Llama 3.3 70B) via `groq-sdk`, isolated
+- **AI (optional, Phase 3 & 5):** Groq (free/on_demand-tier `openai/gpt-oss-120b`) via `groq-sdk`, isolated
   behind a vendor-neutral provider abstraction (`lib/ai/`)
 - **Charts (Phase 5):** `recharts`, styled with the app's own CSS design tokens (no
   external charting service)
@@ -82,7 +82,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Your Supabase anon/public API key |
 | `AI_PROVIDER` | No (Phases 3 & 5 only) | AI provider to use. Currently only `groq` is implemented |
 | `AI_API_KEY` | No (Phases 3 & 5 only) | Your Groq API key — read server-side only, never sent to the browser |
-| `AI_MODEL` | No | Overrides the default model (`llama-3.3-70b-versatile`) |
+| `AI_MODEL` | No | Overrides the default model (`openai/gpt-oss-120b`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | No (Phase 4 extension only) | Powers the Chrome extension's API routes (`app/api/extension/*`) — see [Chrome extension (Phase 4)](#chrome-extension-phase-4) |
 
 The two `NEXT_PUBLIC_SUPABASE_*` values are found in your Supabase project at **Project
@@ -211,7 +211,7 @@ configuration.
    AI_PROVIDER=groq
    AI_API_KEY=gsk_...
    ```
-3. Optionally set `AI_MODEL` to override the default (`llama-3.3-70b-versatile`).
+3. Optionally set `AI_MODEL` to override the default (`openai/gpt-oss-120b`).
 4. Restart `npm run dev` (or redeploy). The "AI provider not configured" banner on
    `/dashboard/resume-optimizer`, `/dashboard/cover-letter`, `/dashboard/interview-prep`,
    and `/dashboard/career-assistant` should disappear.
@@ -305,10 +305,11 @@ Assistant):
   `getAIProvider()` (returns `null` if unconfigured), `requireAIProvider()` (throws a
   typed error if unconfigured), and `isAIProviderConfigured()` (non-throwing check used
   to render the "not configured" banner). Requests use Groq's `chat.completions.create()`
-  with `response_format: { type: "json_object" }` — Groq's `llama-3.3-70b-versatile`
-  rejects the stricter `json_schema` structured-outputs mode (confirmed against the live
-  API; only `json_object` is actually supported for this model), so `json_object` mode is
-  used to constrain the response to *syntactically* valid JSON, and the response is then
+  with `response_format: { type: "json_object" }` — kept deliberately simple and portable
+  across models rather than tied to a specific model's stricter `json_schema`
+  structured-outputs feature (the current default, `openai/gpt-oss-120b`, does support
+  structured outputs, but the app doesn't rely on it). `json_object` mode is used to
+  constrain the response to *syntactically* valid JSON, and the response is then
   parsed and fully re-validated against the matching Zod schema
   (`lib/validations/ai-output.ts`) before it ever reaches application code — the Zod
   validation, not the response-format hint, is the real safety guarantee. Each of the six
@@ -317,7 +318,7 @@ Assistant):
   typed error.
 - **`lib/ai/token-budget.ts`** — a preflight check run before every completion request.
   Estimates prompt size with a conservative chars-per-token heuristic, compares it against
-  `llama-3.3-70b-versatile`'s real 131,072-token context window (verified directly against
+  `openai/gpt-oss-120b`'s real 131,072-token context window (verified directly against
   Groq's models API, not assumed) minus a 15% safety margin and the feature's reserved
   output-token budget, and fails fast with a clear "too large" error *before* sending an
   oversized request, instead of letting the provider reject it or silently truncate.

@@ -12,11 +12,13 @@
  *   (Math.ceil), so this slightly OVER-counts tokens and stays conservative
  *   rather than optimistic.
  *
- * Model limit below was verified directly against Groq's models API
- * (`client.models.retrieve("llama-3.3-70b-versatile")`) rather than
- * assumed: context_window = 131,072 tokens. If AI_MODEL is overridden to a
- * different model this number may not hold exactly, but it's still a
- * reasonable conservative default rather than an arbitrary guess.
+ * Model limit below was verified directly against Groq's live models list
+ * for the current default, openai/gpt-oss-120b: context_window = 131,072
+ * tokens (same value the prior default, llama-3.3-70b-versatile, had — no
+ * change needed when that model was retired and swapped out). If AI_MODEL
+ * is overridden to a different model this number may not hold exactly, but
+ * it's still a reasonable conservative default rather than an arbitrary
+ * guess.
  */
 const CHARS_PER_TOKEN = 4;
 
@@ -24,7 +26,7 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
-/** Verified via Groq's models API for llama-3.3-70b-versatile — see file header comment. */
+/** Verified via Groq's models API for openai/gpt-oss-120b — see file header comment. */
 export const MODEL_CONTEXT_WINDOW_TOKENS = 131_072;
 
 /**

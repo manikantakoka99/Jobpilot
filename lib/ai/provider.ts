@@ -51,19 +51,28 @@ import type {
 } from "./types";
 
 /**
- * Free-tier default: Llama 3.3 70B on Groq is a strong, no-cost fit for
- * resume/cover-letter rewriting (nuanced writing + instruction following)
- * without requiring a paid API key. Override with the AI_MODEL env var
- * without code changes.
+ * Free-tier default: openai/gpt-oss-120b on Groq. llama-3.3-70b-versatile
+ * (the previous default) was retired by Groq and now 404s on every request
+ * for any key (confirmed live via client.models.list() — the model is
+ * absent from the account's catalog entirely). gpt-oss-120b is the
+ * strongest currently-available free/on_demand chat model on Groq for this
+ * account: 131,072 token context window, "json_mode" in its
+ * supported_features (confirmed via client.models.retrieve-equivalent
+ * lookup against the live models list), and it produces valid JSON that
+ * passes every one of this app's six Zod output schemas when tested
+ * directly against the real prompts this file builds. Override with the
+ * AI_MODEL env var without code changes.
  *
- * Output token budgets are per-feature because the two output schemas are
- * very different sizes (see lib/validations/ai-output.ts): a rewritten
- * resume plus a full changes list can legitimately run several times
- * longer than a single cover letter. Both are well under this model's
- * verified 32,768 max_completion_tokens ceiling (confirmed via
- * client.models.retrieve("llama-3.3-70b-versatile")).
+ * Output token budgets are per-feature because the output schemas are very
+ * different sizes (see lib/validations/ai-output.ts): a rewritten resume
+ * plus a full changes list can legitimately run several times longer than a
+ * single cover letter. All are well under this model's 65,536
+ * max_completion_tokens ceiling. Note: the account's free on_demand service
+ * tier also enforces its own tokens-per-minute (TPM) quota independent of
+ * this app's own context-window budgeting below — see the AIRateLimitError
+ * branch in toAIProviderError() and the 413 handling added for it.
  */
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 const RESUME_OUTPUT_TOKENS = 8192;
 const COVER_LETTER_OUTPUT_TOKENS = 4096;
 const INTERVIEW_QUESTIONS_OUTPUT_TOKENS = 4096;
@@ -72,15 +81,15 @@ const INTERVIEW_SUMMARY_OUTPUT_TOKENS = 1536;
 const CAREER_ASSISTANT_OUTPUT_TOKENS = 1536;
 
 /**
- * Groq's structured-outputs mode (`response_format: {type: "json_schema"}`)
- * isn't supported by every model — llama-3.3-70b-versatile rejects it with
- * an `invalid_request_error` on `response_format` (confirmed against the
- * live API; Groq's own models API lists this model's supported_features as
- * ["tools", "json_mode"], not structured outputs). `json_object` mode
- * ("json_mode") IS supported and is what we use instead: the model is
- * still constrained to emit valid JSON, and the required shape is spelled
- * out explicitly in the system prompt (see lib/ai/prompts.ts). Either way,
- * the app never trusts the model's adherence to the shape alone — every
+ * `json_object` mode ("json_mode") is what we use, not Groq's structured
+ * outputs (`response_format: {type: "json_schema"}`) — kept deliberately
+ * simple and portable across models rather than tied to a specific model's
+ * schema-following feature (the previous default, llama-3.3-70b-versatile,
+ * didn't support structured outputs at all; the current default,
+ * openai/gpt-oss-120b, does, but we still don't rely on it). The model is
+ * constrained to emit valid JSON, and the required shape is spelled out
+ * explicitly in the system prompt (see lib/ai/prompts.ts). Either way, the
+ * app never trusts the model's adherence to the shape alone — every
  * response is re-validated against the same Zod schema in
  * parseAndValidate() below, which is the real enforcement layer.
  */
@@ -121,6 +130,20 @@ function toAIProviderError(error: unknown, budget?: { estimatedPromptTokens: num
     return new AIProviderUnavailableError();
   }
   if (error instanceof Groq.APIError) {
+    // Groq's SDK has no dedicated error subclass for 413 (it only special-
+    // cases 400/401/403/404/409/422/429/5xx — see groq-sdk/core/error.js —
+    // so a 413 lands here as a bare APIError). Groq returns 413 for its
+    // free/on_demand tier's tokens-per-minute (TPM) quota, distinct from
+    // the per-request context-window budget this app checks up front in
+    // checkPromptBudget(): a request can be well within the model's context
+    // window and still get rejected here if the account has made other
+    // large requests within the same rolling minute. Treat it the same as
+    // AIRateLimitError (a 429) rather than the generic fallback, since it's
+    // the same actionable situation for the user: wait and retry.
+    if (error.status === 413) {
+      console.warn(`[ai] Groq 413 (tokens-per-minute quota) — treated as rate limit`);
+      return new AIRateLimitError();
+    }
     return new AIUnexpectedError();
   }
   return new AIUnexpectedError();
