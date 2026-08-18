@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
-import { ClipboardList } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { ComingSoon } from "@/components/dashboard/coming-soon";
+import { createClient } from "@/lib/supabase/server";
+import { listApplications } from "@/services/application-service";
+import { ApplicationStats } from "@/components/applications/application-stats";
+import { ApplicationBoard } from "@/components/applications/application-board";
 
 export const metadata: Metadata = { title: "Applications" };
 
-export default function ApplicationsPage() {
+export default async function ApplicationsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const applications = await listApplications(supabase, user.id);
+
   return (
-    <ComingSoon
-      icon={ClipboardList}
-      title="Applications"
-      description="Track every application from submission to offer in one organized board."
-    />
+    <div className="space-y-6">
+      <ApplicationStats applications={applications} />
+      <ApplicationBoard applications={applications} />
+    </div>
   );
 }

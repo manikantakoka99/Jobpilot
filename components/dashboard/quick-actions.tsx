@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserCircle2, FileCheck2, ClipboardList, ArrowUpRight } from "lucide-react";
+import { UserCircle2, FileCheck2, ClipboardList, MessagesSquare, ArrowUpRight } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 
@@ -12,21 +12,27 @@ const ACTIONS = [
   },
   {
     icon: FileCheck2,
-    title: "Try ATS Analyzer",
+    title: "Run an ATS Analysis",
     description: "Score your resume against a job description in seconds.",
     href: "/dashboard/ats-analyzer",
   },
   {
     icon: ClipboardList,
-    title: "Preview Applications",
-    description: "See what's coming in a future phase.",
+    title: "Log an application",
+    description: "Track a job you've applied to and follow its status.",
     href: "/dashboard/applications",
+  },
+  {
+    icon: MessagesSquare,
+    title: "Practice an interview",
+    description: "Get grounded questions and feedback for your target role.",
+    href: "/dashboard/interview-prep",
   },
 ];
 
 export function QuickActions() {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {ACTIONS.map(({ icon: Icon, title, description, href }) => (
         <Link key={href} href={href} className="focus-visible:ring-ring rounded-2xl outline-none focus-visible:ring-2">
           <Card className="group hover:border-primary/30 h-full p-5 transition-colors">

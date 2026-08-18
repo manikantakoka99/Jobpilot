@@ -37,6 +37,17 @@ export async function getResumeById(supabase: Client, userId: string, resumeId: 
   return data;
 }
 
+/** Signed, time-limited URL for viewing/downloading the original uploaded file — the `resumes` Storage bucket is private. */
+export async function createResumeSignedUrl(supabase: Client, userId: string, resumeId: string): Promise<string> {
+  const resume = await getResumeById(supabase, userId, resumeId);
+  if (!resume) throw new ResumeServiceError("Resume not found.");
+
+  const { data, error } = await supabase.storage.from("resumes").createSignedUrl(resume.file_path, 60);
+  if (error || !data) throw new ResumeServiceError("Failed to open resume. Please try again.");
+
+  return data.signedUrl;
+}
+
 function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
 }

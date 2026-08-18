@@ -1,16 +1,17 @@
-import type { Metadata } from "next";
-import { Bot } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { ComingSoon } from "@/components/dashboard/coming-soon";
+import { createClient } from "@/lib/supabase/server";
+import { listCareerAssistantSessions } from "@/services/career-assistant-service";
+import { CareerAssistantShell } from "@/components/career-assistant/career-assistant-shell";
 
-export const metadata: Metadata = { title: "Career Assistant" };
+export default async function CareerAssistantPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-export default function CareerAssistantPage() {
-  return (
-    <ComingSoon
-      icon={Bot}
-      title="Career Assistant"
-      description="Chat with an AI assistant for guidance throughout your job search."
-    />
-  );
+  const sessions = await listCareerAssistantSessions(supabase, user.id);
+
+  return <CareerAssistantShell sessions={sessions} activeSessionId={null} initialDetail={null} />;
 }

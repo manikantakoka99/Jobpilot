@@ -1,12 +1,27 @@
 import Groq from "groq-sdk";
 import { z } from "zod";
 
-import { optimizeResumeOutputSchema, generateCoverLetterOutputSchema } from "@/lib/validations/ai-output";
+import {
+  optimizeResumeOutputSchema,
+  generateCoverLetterOutputSchema,
+  generateInterviewQuestionsOutputSchema,
+  evaluateInterviewAnswerOutputSchema,
+  summarizeInterviewSessionOutputSchema,
+  careerAssistantChatOutputSchema,
+} from "@/lib/validations/ai-output";
 import {
   buildOptimizeResumeSystemPrompt,
   buildOptimizeResumeUserPrompt,
   buildCoverLetterSystemPrompt,
   buildCoverLetterUserPrompt,
+  buildInterviewQuestionsSystemPrompt,
+  buildInterviewQuestionsUserPrompt,
+  buildAnswerFeedbackSystemPrompt,
+  buildAnswerFeedbackUserPrompt,
+  buildInterviewSummarySystemPrompt,
+  buildInterviewSummaryUserPrompt,
+  buildCareerAssistantSystemPrompt,
+  buildCareerAssistantUserPrompt,
 } from "./prompts";
 import {
   AIProviderNotConfiguredError,
@@ -25,6 +40,14 @@ import type {
   GenerateCoverLetterInput,
   OptimizeResumeOutput,
   GenerateCoverLetterOutput,
+  GenerateInterviewQuestionsInput,
+  GenerateInterviewQuestionsOutput,
+  EvaluateInterviewAnswerInput,
+  EvaluateInterviewAnswerOutput,
+  SummarizeInterviewSessionInput,
+  SummarizeInterviewSessionOutput,
+  CareerAssistantChatInput,
+  CareerAssistantChatOutput,
 } from "./types";
 
 /**
@@ -43,6 +66,10 @@ import type {
 const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 const RESUME_OUTPUT_TOKENS = 8192;
 const COVER_LETTER_OUTPUT_TOKENS = 4096;
+const INTERVIEW_QUESTIONS_OUTPUT_TOKENS = 4096;
+const ANSWER_FEEDBACK_OUTPUT_TOKENS = 1536;
+const INTERVIEW_SUMMARY_OUTPUT_TOKENS = 1536;
+const CAREER_ASSISTANT_OUTPUT_TOKENS = 1536;
 
 /**
  * Groq's structured-outputs mode (`response_format: {type: "json_schema"}`)
@@ -241,6 +268,118 @@ class GroqProvider implements AIProvider {
       generateCoverLetterOutputSchema,
       budget,
       "generateCoverLetter",
+    );
+  }
+
+  async generateInterviewQuestions(input: GenerateInterviewQuestionsInput): Promise<GenerateInterviewQuestionsOutput> {
+    const systemPrompt = buildInterviewQuestionsSystemPrompt();
+    const userPrompt = buildInterviewQuestionsUserPrompt(input);
+
+    const budget = checkPromptBudget(systemPrompt, userPrompt, INTERVIEW_QUESTIONS_OUTPUT_TOKENS);
+    if (!budget.ok) {
+      throw new AIContentTooLargeError(
+        `Your resume and job description exceed the AI input limit (~${budget.estimatedPromptTokens.toLocaleString()} estimated tokens, limit ~${budget.limitTokens.toLocaleString()}). Try removing unrelated boilerplate from the job description.`,
+      );
+    }
+
+    return createValidatedCompletion(
+      () =>
+        this.client.chat.completions.create({
+          model: this.model,
+          max_completion_tokens: INTERVIEW_QUESTIONS_OUTPUT_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: JSON_OBJECT_RESPONSE_FORMAT,
+        }),
+      generateInterviewQuestionsOutputSchema,
+      budget,
+      "generateInterviewQuestions",
+    );
+  }
+
+  async evaluateInterviewAnswer(input: EvaluateInterviewAnswerInput): Promise<EvaluateInterviewAnswerOutput> {
+    const systemPrompt = buildAnswerFeedbackSystemPrompt();
+    const userPrompt = buildAnswerFeedbackUserPrompt(input);
+
+    const budget = checkPromptBudget(systemPrompt, userPrompt, ANSWER_FEEDBACK_OUTPUT_TOKENS);
+    if (!budget.ok) {
+      throw new AIContentTooLargeError(
+        `Your resume exceeds the AI input limit (~${budget.estimatedPromptTokens.toLocaleString()} estimated tokens, limit ~${budget.limitTokens.toLocaleString()}).`,
+      );
+    }
+
+    return createValidatedCompletion(
+      () =>
+        this.client.chat.completions.create({
+          model: this.model,
+          max_completion_tokens: ANSWER_FEEDBACK_OUTPUT_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: JSON_OBJECT_RESPONSE_FORMAT,
+        }),
+      evaluateInterviewAnswerOutputSchema,
+      budget,
+      "evaluateInterviewAnswer",
+    );
+  }
+
+  async summarizeInterviewSession(input: SummarizeInterviewSessionInput): Promise<SummarizeInterviewSessionOutput> {
+    const systemPrompt = buildInterviewSummarySystemPrompt();
+    const userPrompt = buildInterviewSummaryUserPrompt(input);
+
+    const budget = checkPromptBudget(systemPrompt, userPrompt, INTERVIEW_SUMMARY_OUTPUT_TOKENS);
+    if (!budget.ok) {
+      throw new AIContentTooLargeError(
+        `This interview session's transcript exceeds the AI input limit (~${budget.estimatedPromptTokens.toLocaleString()} estimated tokens, limit ~${budget.limitTokens.toLocaleString()}).`,
+      );
+    }
+
+    return createValidatedCompletion(
+      () =>
+        this.client.chat.completions.create({
+          model: this.model,
+          max_completion_tokens: INTERVIEW_SUMMARY_OUTPUT_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: JSON_OBJECT_RESPONSE_FORMAT,
+        }),
+      summarizeInterviewSessionOutputSchema,
+      budget,
+      "summarizeInterviewSession",
+    );
+  }
+
+  async careerAssistantChat(input: CareerAssistantChatInput): Promise<CareerAssistantChatOutput> {
+    const systemPrompt = buildCareerAssistantSystemPrompt();
+    const userPrompt = buildCareerAssistantUserPrompt(input);
+
+    const budget = checkPromptBudget(systemPrompt, userPrompt, CAREER_ASSISTANT_OUTPUT_TOKENS);
+    if (!budget.ok) {
+      throw new AIContentTooLargeError(
+        `This conversation exceeds the AI input limit (~${budget.estimatedPromptTokens.toLocaleString()} estimated tokens, limit ~${budget.limitTokens.toLocaleString()}). Try starting a new conversation.`,
+      );
+    }
+
+    return createValidatedCompletion(
+      () =>
+        this.client.chat.completions.create({
+          model: this.model,
+          max_completion_tokens: CAREER_ASSISTANT_OUTPUT_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: JSON_OBJECT_RESPONSE_FORMAT,
+        }),
+      careerAssistantChatOutputSchema,
+      budget,
+      "careerAssistantChat",
     );
   }
 }

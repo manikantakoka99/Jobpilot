@@ -21,9 +21,12 @@ const MIN_JD_LENGTH = 50;
 interface AnalyzerFormProps {
   resumes: ResumeRow[];
   initialResumeId?: string;
+  /** Pre-fills from a saved job (see /dashboard/jobs "Analyze" action) — the deterministic ATS engine itself is untouched. */
+  initialJobTitle?: string;
+  initialJobDescription?: string;
 }
 
-export function AnalyzerForm({ resumes, initialResumeId }: AnalyzerFormProps) {
+export function AnalyzerForm({ resumes, initialResumeId, initialJobTitle, initialJobDescription }: AnalyzerFormProps) {
   const router = useRouter();
 
   const preselected = initialResumeId ? resumes.find((r) => r.id === initialResumeId) : undefined;
@@ -32,8 +35,8 @@ export function AnalyzerForm({ resumes, initialResumeId }: AnalyzerFormProps) {
   const [selectedResume, setSelectedResume] = React.useState<{ id: string; fileName: string } | null>(
     preselected ? { id: preselected.id, fileName: preselected.file_name } : null,
   );
-  const [jobTitle, setJobTitle] = React.useState("");
-  const [jobDescription, setJobDescription] = React.useState("");
+  const [jobTitle, setJobTitle] = React.useState(initialJobTitle ?? "");
+  const [jobDescription, setJobDescription] = React.useState(initialJobDescription ?? "");
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

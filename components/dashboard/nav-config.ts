@@ -9,6 +9,7 @@ import {
   BarChart3,
   Bot,
   FolderOpen,
+  Briefcase,
   User,
   Settings,
 } from "lucide-react";
@@ -34,16 +35,17 @@ export const NAV_SECTIONS: NavSection[] = [
       { title: "ATS Analyzer", href: "/dashboard/ats-analyzer", icon: FileCheck2, status: "active" },
       { title: "Resume Optimizer", href: "/dashboard/resume-optimizer", icon: FileEdit, status: "active" },
       { title: "Cover Letter", href: "/dashboard/cover-letter", icon: Mail, status: "active" },
-      { title: "Applications", href: "/dashboard/applications", icon: ClipboardList, status: "soon" },
-      { title: "Interview Prep", href: "/dashboard/interview-prep", icon: MessagesSquare, status: "soon" },
-      { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3, status: "soon" },
+      { title: "Jobs", href: "/dashboard/jobs", icon: Briefcase, status: "active" },
+      { title: "Applications", href: "/dashboard/applications", icon: ClipboardList, status: "active" },
+      { title: "Interview Prep", href: "/dashboard/interview-prep", icon: MessagesSquare, status: "active" },
+      { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3, status: "active" },
     ],
   },
   {
     label: "Tools",
     items: [
-      { title: "Career Assistant", href: "/dashboard/career-assistant", icon: Bot, status: "soon" },
-      { title: "Documents", href: "/dashboard/documents", icon: FolderOpen, status: "soon" },
+      { title: "Career Assistant", href: "/dashboard/career-assistant", icon: Bot, status: "active" },
+      { title: "Documents", href: "/dashboard/documents", icon: FolderOpen, status: "active" },
     ],
   },
   {
@@ -63,4 +65,8 @@ export const PAGE_TITLES: Record<string, string> = {
   // Nested Resume Optimizer / Cover Letter routes — same pattern.
   "/dashboard/resume-optimizer/versions": "Resume Optimizer",
   "/dashboard/cover-letter/history": "Cover Letter",
+  // Nested Interview Prep routes — same pattern.
+  "/dashboard/interview-prep/history": "Interview Prep",
+  // Apply Assistant is reached contextually (from an application), not via the sidebar.
+  "/dashboard/apply-assistant": "Apply Assistant",
 };
